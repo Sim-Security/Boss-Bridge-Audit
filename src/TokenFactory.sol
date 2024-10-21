@@ -21,14 +21,24 @@ contract TokenFactory is Ownable {
      * @param contractBytecode The bytecode of the new token
      */
     function deployToken(string memory symbol, bytes memory contractBytecode) public onlyOwner returns (address addr) {
+        // q are you sure you want this out of scope?
+        // q maybe this is a gas efficiency thing?
         assembly {
+            // X large
+            // load the contract into memory
+            // create a new contract
+            // @audit-high this is not compatible with zksync
+            // see this link https://docs.zksync.io/build/developer-reference/ethereum-differences/evm-instructions#create-create2
             addr := create(0, add(contractBytecode, 0x20), mload(contractBytecode))
         }
         s_tokenToAddress[symbol] = addr;
         emit TokenDeployed(symbol, addr);
     }
 
+    // @audit-info - should be external since it isnt being used in the contract.
     function getTokenAddressFromSymbol(string memory symbol) public view returns (address addr) {
         return s_tokenToAddress[symbol];
     }
 }
+
+// ok

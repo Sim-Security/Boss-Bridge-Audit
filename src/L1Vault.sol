@@ -16,7 +16,11 @@ contract L1Vault is Ownable {
         token = _token;
     }
 
+    // q why not just hard code the approval to only the bridge?
+    // why are we potentially allowing anyone
+    // 
     function approveTo(address target, uint256 amount) external onlyOwner {
         token.approve(target, amount);
     }
 }
+// ok
