@@ -15,6 +15,8 @@ Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#functio
 INFO:Detectors:
 L1Vault.approveTo(address,uint256) (src/L1Vault.sol#19-21) ignores return value by token.approve(target,amount) (src/L1Vault.sol#20)
 Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#unused-return
+
+
 INFO:Detectors:
 L1BossBridge.sendToL1(uint8,bytes32,bytes32,bytes).target (src/L1BossBridge.sol#119) lacks a zero-check on :
                 - (success,None) = target.call{value: value}(data) (src/L1BossBridge.sol#121)

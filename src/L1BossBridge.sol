@@ -27,6 +27,7 @@ import { L1Vault } from "./L1Vault.sol";
 contract L1BossBridge is Ownable, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
+    // @audit-info - this should be a constant
     uint256 public DEPOSIT_LIMIT = 100_000 ether; // e depositing tokens, cannot have more than this
 
     IERC20 public immutable token; // e one bridge per token
@@ -73,6 +74,9 @@ contract L1BossBridge is Ownable, Pausable, ReentrancyGuard {
     // Bob: depositTokensToL2(from:Alice, l2Recipient:Bob, amount:all her money!)
     // @audit-high - if a user approves the bridge, any other user can steal their funds.
     // should be using "msg.sender" instead of "from".
+
+    // @audit-high - if the vault approved the bridge, can a user steal funds from the vault?
+    // Can continuously mint to the L2 and send it to an attacker's address.
     function depositTokensToL2(address from, address l2Recipient, uint256 amount) external whenNotPaused {
         if (token.balanceOf(address(vault)) + amount > DEPOSIT_LIMIT) {
             revert L1BossBridge__DepositLimitReached();
@@ -80,6 +84,7 @@ contract L1BossBridge is Ownable, Pausable, ReentrancyGuard {
         token.safeTransferFrom(from, address(vault), amount);
 
         // Our off-chain service picks up this event and mints the corresponding tokens on L2
+        // @audit-info - should follow CEI. i.e should be above the safeTransferFrom
         emit Deposit(from, l2Recipient, amount);
     }
 
@@ -94,6 +99,8 @@ contract L1BossBridge is Ownable, Pausable, ReentrancyGuard {
      * @param r The r value of the signature
      * @param s The s value of the signature
      */
+
+    // @audit-high - Signature replay attack! Stored v,r,s on chain! Use a nonce or deadline to stop
     function withdrawTokensToL1(address to, uint256 amount, uint8 v, bytes32 r, bytes32 s) external {
         sendToL1(
             v,
@@ -123,7 +130,9 @@ contract L1BossBridge is Ownable, Pausable, ReentrancyGuard {
         }
 
         (address target, uint256 value, bytes memory data) = abi.decode(message, (address, uint256, bytes));
-
+        
+        // q slither said this is bad, is it ok?
+        // No, we just trust the message. What if the attacker calls this function with a malicious message? such as approveTo in the L1Vault Contract. Bingo bango the attacker has emptied the vaults
         (bool success,) = target.call{ value: value }(data);
         if (!success) {
             revert L1BossBridge__CallFailed();

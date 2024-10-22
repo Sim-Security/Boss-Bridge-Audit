@@ -9,6 +9,7 @@ contract TokenFactoryTest is Test {
     TokenFactory tokenFactory;
     address owner = makeAddr("owner");
 
+
     function setUp() public {
         vm.prank(owner);
         tokenFactory = new TokenFactory();
@@ -19,4 +20,6 @@ contract TokenFactoryTest is Test {
         address tokenAddress = tokenFactory.deployToken("TEST", type(L1Token).creationCode);
         assertEq(tokenFactory.getTokenAddressFromSymbol("TEST"), tokenAddress);
     }
+
+
 }
